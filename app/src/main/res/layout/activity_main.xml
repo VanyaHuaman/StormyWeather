@@ -7,14 +7,14 @@
     <data>
         <variable
         name = "weather"
-        type = "com.example.vanya.stormy.CurrentWeather"/>
+        type = "com.example.vanya.stormy.Weather.Current"/>
     </data>
 
 <android.support.constraint.ConstraintLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/backgroundColor"
-    tools:context=".MainActivity">
+    tools:context=".ui.MainActivity">
 
     <TextView
         android:id="@+id/temperatureValue"
@@ -159,7 +159,7 @@
         android:id="@+id/darkSkyAttribution"
         android:layout_width="wrap_content"
         android:layout_height="15dp"
-        android:layout_marginBottom="24dp"
+        android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:text="@string/dark_sky_message"
@@ -182,6 +182,25 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/refresh" />
+
+    <Button
+        android:id="@+id/hourlyButton"
+        android:layout_width="wrap_content"
+        android:layout_height="30dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:background="#40ffffff"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"
+        android:text="Hourly Forecast"
+        android:onClick="hourlyOnClick"
+        android:textColor="@android:color/white"
+        app:layout_constraintBottom_toTopOf="@+id/darkSkyAttribution"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/summaryValue" />
 </android.support.constraint.ConstraintLayout>
 
 

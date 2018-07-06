@@ -1,7 +1,7 @@
-package com.example.vanya.stormy;
+package com.example.vanya.stormy.ui;
 
-import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
@@ -14,13 +14,19 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import com.example.vanya.stormy.R;
+import com.example.vanya.stormy.Weather.Current;
+import com.example.vanya.stormy.Weather.Forecast;
+import com.example.vanya.stormy.Weather.Hour;
 import com.example.vanya.stormy.databinding.ActivityMainBinding;
-
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.IOException;
+import java.io.Serializable;
+import java.lang.reflect.Array;
+import java.util.Arrays;
+import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -32,12 +38,12 @@ public class MainActivity extends AppCompatActivity {
 
     String TAG = MainActivity.class.getSimpleName();
 
-    private CurrentWeather currentWeather = new CurrentWeather();
+    private Forecast forecast = new Forecast();
 
     private ImageView iconImageView;
 
-    final double latitude = 37.8267 ;
-    final double longitude = -22.4233;
+    final double latitude = 32.7767;
+    final double longitude = -96.7970;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -79,17 +85,19 @@ public class MainActivity extends AppCompatActivity {
                         String jsonData = response.body().string();
                         Log.v(TAG, jsonData);
                         if (response.isSuccessful()) {
-                            currentWeather = getCurrentDetails(jsonData);
+                            forecast = parseForecastData(jsonData);
 
-                            final CurrentWeather displayWeather = new CurrentWeather(
-                                    currentWeather.getLocationLabel(),
-                                    currentWeather.getIcon(),
-                                    currentWeather.getTime(),
-                                    currentWeather.getTemperature(),
-                                    currentWeather.getHumidity(),
-                                    currentWeather.getPrecipChance(),
-                                    currentWeather.getSummary(),
-                                    currentWeather.getTimeZone()
+                            Current current = forecast.getCurrent();
+
+                            final Current displayWeather = new Current(
+                                    current.getLocationLabel(),
+                                    current.getIcon(),
+                                    current.getTime(),
+                                    current.getTemperature(),
+                                    current.getHumidity(),
+                                    current.getPrecipChance(),
+                                    current.getSummary(),
+                                    current.getTimeZone()
                             );
 
                             binding.setWeather(displayWeather);
@@ -118,7 +126,39 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private CurrentWeather getCurrentDetails(String jsonData) throws JSONException {
+    private Forecast parseForecastData(String jsonData) throws JSONException {
+        Forecast forecast = new Forecast();
+
+        forecast.setCurrent(getCurrentDetails(jsonData));
+        forecast.setHourlyForecast(getHourlyForecast(jsonData));
+
+        return forecast;
+    }
+
+    private Hour[] getHourlyForecast(String jsonData) throws JSONException {
+        JSONObject forecast = new JSONObject(jsonData);
+        String timezone = forecast.getString("timezone");
+
+        JSONObject hourly = forecast.getJSONObject("hourly");
+        JSONArray data = hourly.getJSONArray("data");
+        Hour[] Hours = new Hour[data.length()];
+
+        for (int index = 0; index<data.length(); index++){
+            JSONObject jsonObject = data.getJSONObject(index);
+            Hour hour = new Hour(jsonObject.getLong("time"),
+                    jsonObject.getString("summary"),
+                    jsonObject.getDouble("temperature"),
+                    jsonObject.getString("icon"),
+                    timezone);
+
+            Hours[index]=hour;
+        }
+
+        return Hours;
+    }
+
+
+    private Current getCurrentDetails(String jsonData) throws JSONException {
         JSONObject forecast = new JSONObject(jsonData);
 
         String timeZone = forecast.getString("timezone");
@@ -126,20 +166,20 @@ public class MainActivity extends AppCompatActivity {
 
         JSONObject currently = forecast.getJSONObject("currently");
 
-        CurrentWeather currentWeather = new CurrentWeather();
+        Current current = new Current();
 
-        currentWeather.setHumidity(currently.getDouble("humidity"));
-        currentWeather.setTime(currently.getLong("time"));
-        currentWeather.setIcon(currently.getString("icon"));
-        currentWeather.setLocationLabel("Alcatraz Island, CA");
-        currentWeather.setPrecipChance(currently.getDouble("precipProbability"));
-        currentWeather.setSummary(currently.getString("summary"));
-        currentWeather.setTemperature(currently.getDouble("temperature"));
-        currentWeather.setTimeZone(timeZone);
+        current.setHumidity(currently.getDouble("humidity"));
+        current.setTime(currently.getLong("time"));
+        current.setIcon(currently.getString("icon"));
+        current.setLocationLabel("Dallas, TX");
+        current.setPrecipChance(currently.getDouble("precipProbability"));
+        current.setSummary(currently.getString("summary"));
+        current.setTemperature(currently.getDouble("temperature"));
+        current.setTimeZone(timeZone);
 
-        Log.d(TAG,currentWeather.getFormattedTime());
+        Log.d(TAG, current.getFormattedTime());
 
-        return currentWeather;
+        return current;
     }
 
     private boolean isNetworkAvailable() {
@@ -164,5 +204,12 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this,"Refreshing Data",Toast.LENGTH_LONG).show();
     }
 
+    public void hourlyOnClick(View view){
+        List<Hour> hours = Arrays.asList(forecast.getHourlyForecast());
+
+        Intent intent = new Intent(this,HourlyForecastActivity.class);
+        intent.putExtra("HourlyList", (Serializable) hours);
+        startActivity(intent);
+    }
 
 }
